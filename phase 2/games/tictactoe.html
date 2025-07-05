@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #ffecd2, #fcb69f);
+      color: #333;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      color: #2c3e50;
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 10px;
+      margin: 20px auto;
+      width: 330px;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      font-size: 40px;
+      font-weight: bold;
+      background: #ffffffaa;
+      border: 2px solid #8e44ad;
+      border-radius: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.4s;
+    }
+    .cell:hover {
+      background: #dcd6f7;
+    }
+    .controls {
+      margin-bottom: 20px;
+      font-size: 18px;
+    }
+    .controls label, .controls select {
+      margin: 0 10px;
+    }
+    #difficulty {
+      padding: 5px 10px;
+      font-size: 16px;
+      border: 2px solid #8e44ad;
+      border-radius: 8px;
+      background: #fff0f6;
+      color: #8e44ad;
+      transition: all 0.3s ease-in-out;
+    }
+    #difficulty:hover,
+    #difficulty:focus {
+      background-color: #e6ccff;
+      outline: none;
+      box-shadow: 0 0 8px #8e44ad88;
+    }
+    #message {
+      font-size: 24px;
+      font-weight: bold;
+      color: #e74c3c;
+      margin: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #8e44ad;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #732d91;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 Tic Tac Toe</h1>
+  <div class="controls">
+    <label><input type="radio" name="mode" value="2P" checked> 2 Player</label>
+    <label><input type="radio" name="mode" value="AI"> Vs Computer</label>
+    <label>Difficulty:
+      <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+    </label>
+  </div>
+  <div class="board" id="board"></div>
+  <div id="message"></div>
+  <button onclick="resetGame()">🔁 Restart</button>
+
+  <script>
+    const boardEl = document.getElementById("board");
+    const messageEl = document.getElementById("message");
+    const difficultySelect = document.getElementById("difficulty");
+    let mode = "2P";
+    let board = Array(9).fill("");
+    let currentPlayer = "X";
+    let gameOver = false;
+
+    document.querySelectorAll('input[name="mode"]').forEach(r => {
+      r.addEventListener("change", () => {
+        mode = document.querySelector('input[name="mode"]:checked').value;
+        resetGame();
+      });
+    });
+
+    function renderBoard() {
+      boardEl.innerHTML = "";
+      board.forEach((cell, i) => {
+        const cellEl = document.createElement("div");
+        cellEl.className = "cell";
+        cellEl.textContent = cell;
+        cellEl.onclick = () => handleMove(i);
+        boardEl.appendChild(cellEl);
+      });
+    }
+
+    function handleMove(index) {
+      if (gameOver || board[index]) return;
+      board[index] = currentPlayer;
+      renderBoard();
+
+      if (checkWinner(currentPlayer)) {
+        messageEl.textContent = (mode === "AI" && currentPlayer === "O")
+          ? "Computer wins! 🤖🎉"
+          : `${currentPlayer} wins! 🎉`;
+        gameOver = true;
+        return;
+      }
+
+      if (board.every(c => c)) {
+        messageEl.textContent = "It's a draw! 🤝";
+        gameOver = true;
+        return;
+      }
+
+      currentPlayer = currentPlayer === "X" ? "O" : "X";
+      if (mode === "AI" && currentPlayer === "O") {
+        setTimeout(() => handleMove(getAIMove()), 400);
+      }
+    }
+
+    function getAIMove() {
+      const difficulty = difficultySelect.value;
+      const emptyIndices = board.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+
+      if (difficulty === "easy") {
+        return emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+      }
+      if (difficulty === "medium") {
+        for (let player of ["O", "X"]) {
+          for (let i of emptyIndices) {
+            board[i] = player;
+            if (checkWinner(player)) {
+              board[i] = "";
+              return i;
+            }
+            board[i] = "";
+          }
+        }
+        return emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+      }
+      if (difficulty === "hard") {
+        return minimax(board, "O").index;
+      }
+    }
+
+    function minimax(newBoard, player) {
+      const availSpots = newBoard.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+      if (checkWinnerFor("X", newBoard)) return { score: -10 };
+      if (checkWinnerFor("O", newBoard)) return { score: 10 };
+      if (availSpots.length === 0) return { score: 0 };
+
+      const moves = [];
+      for (let i of availSpots) {
+        const move = { index: i };
+        newBoard[i] = player;
+        move.score = minimax(newBoard, player === "O" ? "X" : "O").score;
+        newBoard[i] = "";
+        moves.push(move);
+      }
+
+      return player === "O"
+        ? moves.reduce((best, m) => m.score > best.score ? m : best)
+        : moves.reduce((best, m) => m.score < best.score ? m : best);
+    }
+
+    function checkWinner(player) {
+      return checkWinnerFor(player, board);
+    }
+
+    function checkWinnerFor(p, b) {
+      const winPatterns = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+      ];
+      return winPatterns.some(pattern => pattern.every(i => b[i] === p));
+    }
+
+    function resetGame() {
+      board = Array(9).fill("");
+      currentPlayer = "X";
+      gameOver = false;
+      messageEl.textContent = "";
+      renderBoard();
+    }
+
+    renderBoard();
+  </script>
+</body>
+</html>

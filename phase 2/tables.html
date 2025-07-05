@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interactive Multiplication Tables</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+  <style>
+    body {
+      transition: background-color 0.4s, color 0.4s;
+    }
+
+    .card {
+      border-radius: 1rem;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+      animation: floatIn 0.6s ease-out;
+    }
+
+    @keyframes floatIn {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #output {
+      white-space: pre-wrap;
+      font-family: "Courier New", monospace;
+      margin-top: 20px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s ease;
+      color: #212529;
+    }
+
+    #output.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .dark-mode {
+      background-color: #1e1e2f !important;
+      color: #f0f0f0 !important;
+    }
+
+    .dark-mode .card {
+      background-color: #2d2d3d;
+      color: #f0f0f0;
+    }
+
+    .dark-mode input,
+    .dark-mode label,
+    .dark-mode .form-control {
+      background-color: #3a3a4a;
+      color: #f0f0f0;
+      border: 1px solid #555;
+    }
+
+    .dark-mode #output {
+      color: #ffffff;
+    }
+
+    .btn-toggle {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+    }
+
+    /* Hover bounce effect for buttons */
+    button:hover {
+      transform: scale(1.05);
+      transition: 0.2s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5 position-relative">
+    <!-- 🌗 Dark Mode Toggle -->
+    <button class="btn btn-outline-secondary btn-sm btn-toggle" onclick="toggleDarkMode()">🌓 Dark Mode</button>
+
+    <!-- 📘 Main Card -->
+    <div class="card p-4 mx-auto" style="max-width: 550px;">
+      <h3 class="text-center mb-4">🧮 Multiplication Tables</h3>
+
+      <div class="mb-3">
+        <label for="start" class="form-label">Start Number</label>
+        <input type="number" class="form-control" id="start" />
+      </div>
+
+      <div class="mb-3">
+        <label for="end" class="form-label">End Number</label>
+        <input type="number" class="form-control" id="end" />
+      </div>
+
+      <button class="btn btn-primary w-100 mb-2" onclick="generateTables()">
+        ➕ Generate Tables
+      </button>
+
+      <button class="btn btn-success w-100" onclick="copyOutput()">
+        📋 Copy to Clipboard
+      </button>
+
+      <div id="output" class="mt-4"></div>
+    </div>
+  </div>
+
+  <script>
+    function generateTables() {
+      const start = parseInt(document.getElementById("start").value);
+      const end = parseInt(document.getElementById("end").value);
+      const output = document.getElementById("output");
+
+      if (isNaN(start) || isNaN(end)) {
+        output.innerHTML = "❗ Please enter both numbers.";
+        output.classList.add("show");
+        return;
+      }
+
+      if (start > end) {
+        output.innerHTML = "❗ Start number should be less than or equal to End number.";
+        output.classList.add("show");
+        return;
+      }
+
+      output.innerHTML = "";
+      output.classList.remove("show");
+
+      let num = start;
+      setTimeout(() => {
+        while (num <= end) {
+          output.innerHTML += `\n📘 Table of ${num}:\n`;
+          let i = 1;
+          while (i <= 10) {
+            output.innerHTML += `${num} × ${i} = ${num * i}\n`;
+            i++;
+          }
+          num++;
+        }
+        output.classList.add("show");
+      }, 150); // delay for smoother animation
+    }
+
+    function copyOutput() {
+      const text = document.getElementById("output").innerText;
+      if (!text.trim()) {
+        alert("⚠️ No tables to copy!");
+        return;
+      }
+      navigator.clipboard.writeText(text).then(() => {
+        alert("✅ Tables copied to clipboard!");
+      });
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+  </script>
+</body>
+</html>

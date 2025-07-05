@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Employee Enrollment Form</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .card {
+      margin-top: 30px;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .drop-zone {
+      border: 2px dashed #6c757d;
+      border-radius: 10px;
+      padding: 40px;
+      text-align: center;
+      color: #6c757d;
+      transition: background-color 0.3s, border-color 0.3s;
+      cursor: pointer;
+    }
+
+    .drop-zone.dragover {
+      background-color: #e9f5ff;
+      border-color: #0d6efd;
+      color: #0d6efd;
+    }
+
+    .file-name {
+      margin-top: 10px;
+      font-weight: 500;
+    }
+
+    .btn-success:hover {
+      transform: scale(1.02);
+      transition: transform 0.2s;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card shadow">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">Employee Enrollment Form</h4>
+    </div>
+    <div class="card-body">
+      <form id="enrollmentForm" novalidate>
+
+        <!-- Personal Information -->
+        <h5 class="text-secondary">Personal Information</h5>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="firstName" class="form-label">First Name</label>
+            <input type="text" class="form-control" id="firstName" required>
+            <div class="invalid-feedback">Please enter your first name.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="lastName" class="form-label">Last Name</label>
+            <input type="text" class="form-control" id="lastName" required>
+            <div class="invalid-feedback">Please enter your last name.</div>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" required>
+            <div class="invalid-feedback">Please enter a valid email address.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="phone" class="form-label">Phone Number</label>
+            <input type="tel" class="form-control" id="phone" required pattern="[0-9]{10}">
+            <div class="invalid-feedback">Please enter a 10-digit phone number.</div>
+          </div>
+        </div>
+
+        <!-- Educational Background -->
+        <h5 class="text-secondary">Educational Background</h5>
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label for="qualification" class="form-label">Qualification</label>
+            <select class="form-select" id="qualification" required>
+              <option value="">Select</option>
+              <option>Bachelor's</option>
+              <option>Master's</option>
+              <option>PhD</option>
+            </select>
+            <div class="invalid-feedback">Please select your qualification.</div>
+          </div>
+          <div class="col-md-4">
+            <label for="university" class="form-label">University</label>
+            <input type="text" class="form-control" id="university" required>
+            <div class="invalid-feedback">Enter university name.</div>
+          </div>
+          <div class="col-md-4">
+            <label for="marks" class="form-label">Marks (%)</label>
+            <input type="number" class="form-control" id="marks" min="0" max="100" required>
+            <div class="invalid-feedback">Please enter marks between 0 and 100.</div>
+          </div>
+        </div>
+
+        <!-- Job Details -->
+        <h5 class="text-secondary">Job Details</h5>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="position" class="form-label">Position Applied For</label>
+            <input type="text" class="form-control" id="position" required>
+            <div class="invalid-feedback">Please enter the position you're applying for.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="experience" class="form-label">Years of Experience</label>
+            <input type="number" class="form-control" id="experience" min="0" required>
+            <div class="invalid-feedback">Please enter your experience in years.</div>
+          </div>
+        </div>
+
+        <!-- Resume Upload -->
+        <h5 class="text-secondary">Resume Upload</h5>
+        <div class="mb-3">
+          <div id="dropZone" class="drop-zone">
+            Drag & Drop your resume here or click to upload
+            <input type="file" id="resume" accept=".pdf,.doc,.docx" hidden required>
+            <div id="fileName" class="file-name"></div>
+            <div class="invalid-feedback d-block" id="fileError" style="display: none;">Please upload a valid resume (.pdf, .doc, .docx).</div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="d-grid">
+          <button type="submit" class="btn btn-success">Submit Application</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Handle drag and drop
+const dropZone = document.getElementById('dropZone');
+const resumeInput = document.getElementById('resume');
+const fileNameDisplay = document.getElementById('fileName');
+const fileError = document.getElementById('fileError');
+const allowedExtensions = ['pdf', 'doc', 'docx'];
+
+dropZone.addEventListener('click', () => resumeInput.click());
+
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.classList.add('dragover');
+});
+
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('dragover');
+});
+
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) {
+    resumeInput.files = e.dataTransfer.files;
+    showFileName();
+  }
+});
+
+resumeInput.addEventListener('change', showFileName);
+
+function showFileName() {
+  const file = resumeInput.files[0];
+  if (file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (allowedExtensions.includes(ext)) {
+      fileNameDisplay.textContent = file.name;
+      fileError.style.display = 'none';
+    } else {
+      fileNameDisplay.textContent = '';
+      fileError.style.display = 'block';
+    }
+  }
+}
+
+// Bootstrap validation
+(() => {
+  'use strict'
+  const form = document.getElementById('enrollmentForm');
+
+  form.addEventListener('submit', function (event) {
+    const file = resumeInput.files[0];
+    let validFile = false;
+
+    if (file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      validFile = allowedExtensions.includes(ext);
+    }
+
+    if (!validFile) {
+      fileError.style.display = 'block';
+      event.preventDefault();
+      event.stopPropagation();
+    } else {
+      fileError.style.display = 'none';
+    }
+
+    if (!form.checkValidity()) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    form.classList.add('was-validated');
+  }, false);
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

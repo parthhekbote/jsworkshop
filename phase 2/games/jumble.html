@@ -1,0 +1,174 @@
+\<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🧩 Jumble Word Game</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #a18cd1, #fbc2eb);
+      color: #333;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      color: white;
+      text-shadow: 1px 1px #00000033;
+    }
+    #jumbleContainer {
+      background: #ffffffdd;
+      border-radius: 12px;
+      padding: 30px;
+      display: inline-block;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      animation: fadeIn 1s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    #jumbleWord {
+      font-size: 36px;
+      letter-spacing: 10px;
+      margin: 20px 0;
+      animation: bounce 1s infinite alternate ease-in-out;
+    }
+    @keyframes bounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-5px); }
+    }
+    input {
+      font-size: 18px;
+      padding: 10px;
+      width: 200px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      font-size: 16px;
+      padding: 10px 20px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #6c5ce7;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #4834d4;
+    }
+    #message {
+      font-size: 20px;
+      margin: 15px 0;
+    }
+    #message.correct {
+      color: green;
+      animation: pop 0.5s ease;
+    }
+    #message.wrong {
+      color: red;
+      animation: shake 0.5s ease;
+    }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    .info {
+      margin: 10px 0;
+      font-weight: bold;
+    }
+    #clue {
+      font-size: 18px;
+      margin-top: 10px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 Jumble Word Game</h1>
+  <div id="jumbleContainer">
+    <p class="info">📝 Unscramble the word:</p>
+    <div id="jumbleWord">_ _ _ _</div>
+    <p id="clue">💡 Clue: </p>
+    <input type="text" id="guessInput" placeholder="Enter your guess" />
+    <br />
+    <button onclick="checkGuess()">✅ Submit</button>
+    <button onclick="startGame()">🔁 New Word</button>
+    <p id="message"></p>
+    <p class="info">🏆 Score: <span id="score">0</span></p>
+  </div>
+
+  <script>
+    const wordList = [
+      { word: "apple", clue: "Keeps the doctor away" },
+      { word: "banana", clue: "Yellow curved fruit" },
+      { word: "ocean", clue: "Large body of saltwater" },
+      { word: "guitar", clue: "String musical instrument" },
+      { word: "school", clue: "Place for learning" },
+      { word: "puzzle", clue: "A game to test your brain" },
+      { word: "jumble", clue: "Mixed-up arrangement" },
+      { word: "rocket", clue: "Launches into space" },
+      { word: "wizard", clue: "Magical spellcaster" },
+      { word: "camera", clue: "Takes pictures" },
+      { word: "forest", clue: "Dense area with many trees" },
+      { word: "window", clue: "You can see through it in a house" },
+      { word: "python", clue: "Snake or a programming language" }
+    ];
+
+    let currentWord = "";
+    let currentClue = "";
+    let score = 0;
+
+    function shuffleWord(word) {
+      let arr = word.split("");
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr.join("");
+    }
+
+    function startGame() {
+      const random = wordList[Math.floor(Math.random() * wordList.length)];
+      currentWord = random.word;
+      currentClue = random.clue;
+
+      let jumbled = shuffleWord(currentWord);
+      while (jumbled === currentWord) {
+        jumbled = shuffleWord(currentWord);
+      }
+
+      document.getElementById("jumbleWord").textContent = jumbled.toUpperCase();
+      document.getElementById("clue").textContent = "💡 Clue: " + currentClue;
+      document.getElementById("guessInput").value = "";
+      document.getElementById("message").textContent = "";
+      document.getElementById("message").className = "";
+    }
+
+    function checkGuess() {
+      const input = document.getElementById("guessInput").value.trim().toLowerCase();
+      const message = document.getElementById("message");
+
+      if (input === currentWord) {
+        score++;
+        message.textContent = "🎉 Correct!";
+        message.className = "correct";
+        document.getElementById("score").textContent = score;
+        setTimeout(startGame, 1000);
+      } else {
+        message.textContent = "❌ Try again!";
+        message.className = "wrong";
+      }
+    }
+
+    startGame();
+  </script>
+</body>
+</html>

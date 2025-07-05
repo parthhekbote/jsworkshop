@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ultimate Hangman Game</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #ff9a9e, #fad0c4);
+      color: #333;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      color: #fff;
+      text-shadow: 1px 1px #00000033;
+    }
+    #wordContainer, .info {
+      background: #ffffffcc;
+      padding: 15px;
+      margin: 10px auto;
+      border-radius: 10px;
+      display: inline-block;
+      font-size: 18px;
+    }
+    #wordDisplay {
+      font-size: 32px;
+      letter-spacing: 10px;
+    }
+    .keyboard {
+      max-width: 500px;
+      margin: 20px auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .key {
+      background: #fff;
+      margin: 5px;
+      padding: 10px 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .key.used {
+      background: #ccc;
+      pointer-events: none;
+    }
+    #restartBtn {
+      padding: 10px 20px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #restartBtn:hover {
+      background: #2980b9;
+    }
+    #message.correct { color: green; }
+    #message.wrong { color: red; }
+    #message.win { color: #2ecc71; }
+    #message.lose { color: #e74c3c; }
+  </style>
+</head>
+<body>
+  <h1>🎯 Ultimate Hangman</h1>
+  <label for="difficulty">🎮 Difficulty: </label>
+  <select id="difficulty">
+    <option value="easy">Easy</option>
+    <option value="medium" selected>Medium</option>
+    <option value="hard">Hard</option>
+  </select>
+  <p id="clue">Clue: </p>
+
+  <!-- Canvas Removed -->
+
+  <div id="wordContainer">
+    <div id="wordDisplay">_ _ _ _</div>
+  </div>
+  <p class="info"><strong>Wrong:</strong> <span id="wrongGuesses">—</span></p>
+  <p class="info"><strong>Attempts Left:</strong> <span id="attemptsLeft">6</span></p>
+  <p class="info"><strong>⏳ Time Left:</strong> <span id="timer">60</span>s</p>
+  <p class="info"><strong>Score:</strong> ✅ Wins: <span id="wins">0</span> | ❌ Losses: <span id="losses">0</span></p>
+  <p id="message"></p>
+  <div class="keyboard" id="keyboard"></div>
+  <button id="restartBtn">🔁 Restart</button>
+
+  <script>
+    const words = [
+      { word: "sun", clue: "Bright star", difficulty: "easy" },
+      { word: "cat", clue: "Small pet", difficulty: "easy" },
+      { word: "apple", clue: "Keeps the doctor away", difficulty: "easy" },
+      { word: "planet", clue: "Orbits the sun", difficulty: "medium" },
+      { word: "banana", clue: "Yellow fruit", difficulty: "medium" },
+      { word: "github", clue: "Code sharing platform", difficulty: "medium" },
+      { word: "javascript", clue: "Language for the web", difficulty: "hard" },
+      { word: "telescope", clue: "Used to see far", difficulty: "hard" },
+      { word: "algorithm", clue: "Step-by-step solution", difficulty: "hard" }
+    ];
+
+    let selected, guessedLetters, wrongLetters, attempts, timerInterval, timeLeft;
+    let wins = 0, losses = 0;
+    const maxAttempts = 6;
+
+    const wordDisplay = document.getElementById("wordDisplay");
+    const clue = document.getElementById("clue");
+    const message = document.getElementById("message");
+    const wrongGuesses = document.getElementById("wrongGuesses");
+    const attemptsLeft = document.getElementById("attemptsLeft");
+    const timer = document.getElementById("timer");
+    const winsEl = document.getElementById("wins");
+    const lossesEl = document.getElementById("losses");
+    const keyboard = document.getElementById("keyboard");
+
+    function getFilteredWords(diff) {
+      return words.filter(w => w.difficulty === diff);
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timeLeft = 60;
+      timer.textContent = timeLeft;
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timer.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          message.textContent = `⏰ Time's up! The word was "${selected.word}".`;
+          message.className = "message lose";
+          losses++;
+          lossesEl.textContent = losses;
+          disableGame();
+        }
+      }, 1000);
+    }
+
+    function initGame() {
+      const difficulty = document.getElementById("difficulty").value;
+      const filtered = getFilteredWords(difficulty);
+      selected = filtered[Math.floor(Math.random() * filtered.length)];
+      guessedLetters = [];
+      wrongLetters = [];
+      attempts = maxAttempts;
+      clue.textContent = "💡 Clue: " + selected.clue;
+      message.textContent = "";
+      message.className = "";
+      wrongGuesses.textContent = "—";
+      attemptsLeft.textContent = attempts;
+      renderWord();
+      renderKeyboard();
+      startTimer();
+    }
+
+    function renderWord() {
+      wordDisplay.textContent = selected.word
+        .split("")
+        .map(l => guessedLetters.includes(l) ? l : "_")
+        .join(" ");
+    }
+
+    function renderKeyboard() {
+      keyboard.innerHTML = "";
+      for (let i = 97; i <= 122; i++) {
+        const letter = String.fromCharCode(i);
+        const btn = document.createElement("button");
+        btn.textContent = letter;
+        btn.className = "key";
+        if (guessedLetters.includes(letter) || wrongLetters.includes(letter)) {
+          btn.classList.add("used");
+          btn.disabled = true;
+        }
+        btn.onclick = () => handleGuess(letter);
+        keyboard.appendChild(btn);
+      }
+    }
+
+    function handleGuess(letter) {
+      if (guessedLetters.includes(letter) || wrongLetters.includes(letter)) return;
+
+      if (selected.word.includes(letter)) {
+        guessedLetters.push(letter);
+        message.textContent = `✅ Good guess: "${letter}"`;
+        message.className = "message correct";
+      } else {
+        wrongLetters.push(letter);
+        attempts--;
+        message.textContent = `❌ Wrong guess: "${letter}"`;
+        message.className = "message wrong";
+      }
+
+      attemptsLeft.textContent = attempts;
+      wrongGuesses.textContent = wrongLetters.length ? wrongLetters.join(", ") : "—";
+      renderWord();
+      renderKeyboard();
+      checkGameStatus();
+    }
+
+    function checkGameStatus() {
+      const won = selected.word.split("").every(l => guessedLetters.includes(l));
+      if (won) {
+        clearInterval(timerInterval);
+        message.textContent = `🎉 You win! The word was "${selected.word}".`;
+        message.className = "message win";
+        wins++;
+        winsEl.textContent = wins;
+        disableGame();
+      } else if (attempts <= 0) {
+        clearInterval(timerInterval);
+        message.textContent = `💀 Game over! The word was "${selected.word}".`;
+        message.className = "message lose";
+        losses++;
+        lossesEl.textContent = losses;
+        disableGame();
+      }
+    }
+
+    function disableGame() {
+      const keys = document.querySelectorAll(".key");
+      keys.forEach(k => k.disabled = true);
+      document.removeEventListener("keydown", keyListener);
+    }
+
+    function keyListener(e) {
+      if (e.key.match(/^[a-z]$/i)) {
+        handleGuess(e.key.toLowerCase());
+      }
+    }
+
+    document.getElementById("restartBtn").onclick = () => {
+      document.addEventListener("keydown", keyListener);
+      initGame();
+    };
+
+    document.addEventListener("keydown", keyListener);
+    initGame();
+  </script>
+</body>
+</html>

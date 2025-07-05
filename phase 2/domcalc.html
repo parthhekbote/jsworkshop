@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Calculator</title>
+  <style>
+    body {
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #c2e9fb 0%, #a1c4fd 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+    }
+
+    .calculator {
+      background: #ffffffcc;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      padding: 30px 25px;
+      backdrop-filter: blur(10px);
+      transition: transform 0.2s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .calculator:hover {
+      transform: scale(1.02);
+    }
+
+    .display {
+      width: 100%;
+      height: 70px;
+      font-size: 2.2rem;
+      text-align: center;
+      padding: 15px;
+      border: none;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+      box-shadow: inset 0 0 5px #ccc;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 70px);
+      grid-gap: 15px;
+      justify-content: center;
+    }
+
+    button {
+      height: 60px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      background: #e0e7ff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    button:hover {
+      background: #c7d2fe;
+      transform: scale(1.05);
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    button.operator {
+      background: #fde68a;
+    }
+
+    button.operator:hover {
+      background: #fcd34d;
+    }
+
+    button.equal {
+      background: #86efac;
+      grid-column: span 2;
+    }
+
+    button.equal:hover {
+      background: #4ade80;
+    }
+
+    button.clear {
+      background: #fca5a5;
+    }
+
+    button.clear:hover {
+      background: #f87171;
+    }
+
+    .theme-toggle {
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    .theme-toggle button {
+      background: #a5b4fc;
+      color: #000;
+      font-size: 1rem;
+      padding: 5px 15px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+
+    .dark-mode {
+      background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    }
+
+    .dark-mode .calculator {
+      background: #1e293bcc;
+      color: white;
+    }
+
+    .dark-mode .display {
+      background-color: #0f172a;
+      color: white;
+    }
+
+    .dark-mode button {
+      background: #334155;
+      color: white;
+    }
+
+    .dark-mode button:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <input type="text" id="display" class="display" disabled />
+
+    <div class="keys">
+      <button class="clear" data-action="clear">C</button>
+      <button data-action="del">⌫</button>
+      <button data-action="percent">%</button>
+      <button class="operator" data-action="divide">÷</button>
+
+      <button>7</button>
+      <button>8</button>
+      <button>9</button>
+      <button class="operator" data-action="multiply">×</button>
+
+      <button>4</button>
+      <button>5</button>
+      <button>6</button>
+      <button class="operator" data-action="subtract">−</button>
+
+      <button>1</button>
+      <button>2</button>
+      <button>3</button>
+      <button class="operator" data-action="add">+</button>
+
+      <button>0</button>
+      <button data-action="decimal">.</button>
+      <button class="equal" data-action="equals">=</button>
+    </div>
+    <div class="theme-toggle">
+      <button id="toggleTheme">Toggle Theme</button>
+    </div>
+  </div>
+
+  <audio id="clickSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+
+  <script>
+    const display = document.getElementById("display");
+    const keys = document.querySelector(".keys");
+    const toggleThemeBtn = document.getElementById("toggleTheme");
+    const clickSound = document.getElementById("clickSound");
+
+    let firstValue = "";
+    let operator = "";
+    let awaitingNext = false;
+
+    function playClick() {
+      clickSound.currentTime = 0;
+      clickSound.play();
+    }
+
+    function calculate(n1, op, n2) {
+      const a = parseFloat(n1);
+      const b = parseFloat(n2);
+      switch (op) {
+        case "add": return a + b;
+        case "subtract": return a - b;
+        case "multiply": return a * b;
+        case "divide": return b === 0 ? "Error" : a / b;
+        default: return b;
+      }
+    }
+
+    keys.addEventListener("click", (e) => {
+      if (!e.target.matches("button")) return;
+
+      playClick();
+
+      const btn = e.target;
+      const action = btn.dataset.action;
+      const btnContent = btn.textContent;
+
+      if (!action) {
+        if (display.value === "0" || awaitingNext) {
+          display.value = btnContent;
+          awaitingNext = false;
+        } else {
+          display.value += btnContent;
+        }
+        return;
+      }
+
+      switch (action) {
+        case "decimal":
+          if (awaitingNext) {
+            display.value = "0.";
+            awaitingNext = false;
+          } else if (!display.value.includes(".")) {
+            display.value += ".";
+          }
+          break;
+
+        case "clear":
+          display.value = "0";
+          firstValue = "";
+          operator = "";
+          awaitingNext = false;
+          break;
+
+        case "del":
+          if (!awaitingNext) display.value = display.value.slice(0, -1) || "0";
+          break;
+
+        case "percent":
+          display.value = (parseFloat(display.value) / 100).toString();
+          break;
+
+        case "equals":
+          if (firstValue && operator && !awaitingNext) {
+            display.value = calculate(firstValue, operator, display.value);
+            firstValue = "";
+            operator = "";
+          }
+          break;
+
+        default:
+          if (!operator) {
+            firstValue = display.value;
+            operator = action;
+          } else if (!awaitingNext) {
+            firstValue = calculate(firstValue, operator, display.value);
+            operator = action;
+            display.value = firstValue;
+          } else {
+            operator = action;
+          }
+          awaitingNext = true;
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      const key = e.key;
+      if (!isNaN(key) || ["+", "-", "*", "/", "."].includes(key)) {
+        const btn = [...keys.querySelectorAll("button")].find(b => b.textContent === key || (b.dataset.action === "add" && key === "+") || (b.dataset.action === "subtract" && key === "-") || (b.dataset.action === "multiply" && key === "*") || (b.dataset.action === "divide" && key === "/") || (b.dataset.action === "decimal" && key === "."));
+        if (btn) btn.click();
+      } else if (key === "Enter") {
+        keys.querySelector("[data-action='equals']").click();
+      } else if (key === "Backspace") {
+        keys.querySelector("[data-action='del']").click();
+      } else if (key === "Escape") {
+        keys.querySelector("[data-action='clear']").click();
+      }
+    });
+
+    toggleThemeBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+    });
+
+    display.value = "0";
+  </script>
+</body>
+</html>
